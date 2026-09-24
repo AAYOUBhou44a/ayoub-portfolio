@@ -5,6 +5,7 @@
 }
 
 .contact-form {
+
   padding-top: 20px;
 
   button {
@@ -18,8 +19,17 @@
     color: white;
   }
 
-  fieldset {
-    background-color: white;
+  .MuiOutlinedInput-root {
+  background-color: white;
+}
+
+  .MuiInputBase-input {
+    color: #050f0b !important;
+    -webkit-text-fill-color: #050f0b !important;
+  }
+
+  .MuiInputLabel-root {
+    color: #050f0b !important;
   }
 }
 

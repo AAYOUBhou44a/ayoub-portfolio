@@ -1,11 +1,15 @@
 import React, { useRef, useState } from "react";
+import emailjs from "@emailjs/browser";
 import "../assets/styles/Contact.scss";
+
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import SendIcon from "@mui/icons-material/Send";
 import TextField from "@mui/material/TextField";
 
 function Contact() {
+  const form = useRef<HTMLFormElement | null>(null);
+
   const [name, setName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [message, setMessage] = useState<string>("");
@@ -14,16 +18,50 @@ function Contact() {
   const [emailError, setEmailError] = useState<boolean>(false);
   const [messageError, setMessageError] = useState<boolean>(false);
 
-  const form = useRef<HTMLFormElement | null>(null);
+  const [sending, setSending] = useState<boolean>(false);
 
-  const sendEmail = (e: React.FormEvent) => {
+  const sendEmail = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    setNameError(name.trim() === "");
-    setEmailError(email.trim() === "");
-    setMessageError(message.trim() === "");
+    const hasNameError = name.trim() === "";
+    const hasEmailError = email.trim() === "";
+    const hasMessageError = message.trim() === "";
 
-    // EmailJS can be added here later.
+    setNameError(hasNameError);
+    setEmailError(hasEmailError);
+    setMessageError(hasMessageError);
+
+    if (hasNameError || hasEmailError || hasMessageError) {
+      return;
+    }
+
+    if (!form.current) {
+      return;
+    }
+
+    try {
+      setSending(true);
+
+      await emailjs.sendForm(
+        process.env.REACT_APP_EMAILJS_SERVICE_ID as string,
+        process.env.REACT_APP_EMAILJS_TEMPLATE_ID as string,
+        form.current,
+        {
+          publicKey: process.env.REACT_APP_EMAILJS_PUBLIC_KEY as string,
+        }
+      );
+
+      alert("Message sent successfully!");
+
+      setName("");
+      setEmail("");
+      setMessage("");
+    } catch (error) {
+      console.error("EmailJS error:", error);
+      alert("Failed to send the message. Please try again.");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -43,58 +81,75 @@ function Contact() {
             noValidate
             autoComplete="off"
             className="contact-form"
+            onSubmit={sendEmail}
           >
             <div className="form-flex">
               <TextField
                 required
                 id="name"
+                name="name"
                 label="Your Name"
                 placeholder="What's your name?"
                 value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                }}
+                onChange={(e) => setName(e.target.value)}
                 error={nameError}
                 helperText={nameError ? "Please enter your name" : ""}
+                sx={{
+                      "& .MuiInputBase-input": {
+                        color: "inherit",
+                        WebkitTextFillColor: "currentColor",
+                      },
+                    }}
               />
 
               <TextField
                 required
                 id="email"
+                name="email"
                 type="email"
                 label="Your Email"
                 placeholder="How can I reach you?"
                 value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                }}
+                onChange={(e) => setEmail(e.target.value)}
                 error={emailError}
                 helperText={emailError ? "Please enter your email" : ""}
+                sx={{
+                      "& .MuiInputBase-input": {
+                        color: "inherit",
+                        WebkitTextFillColor: "currentColor",
+                      },
+                    }}
               />
             </div>
 
             <TextField
               required
               id="message"
+              name="message"
               label="Message"
               placeholder="Tell me about your project or opportunity"
               multiline
               rows={10}
               className="body-form"
               value={message}
-              onChange={(e) => {
-                setMessage(e.target.value);
-              }}
+              onChange={(e) => setMessage(e.target.value)}
               error={messageError}
               helperText={messageError ? "Please enter your message" : ""}
+              sx={{
+                    "& .MuiInputBase-input": {
+                      color: "inherit",
+                      WebkitTextFillColor: "currentColor",
+                    },
+                  }}
             />
 
             <Button
               variant="contained"
               endIcon={<SendIcon />}
-              onClick={sendEmail}
+              type="submit"
+              disabled={sending}
             >
-              Send Message
+              {sending ? "Sending..." : "Send Message"}
             </Button>
           </Box>
         </div>
